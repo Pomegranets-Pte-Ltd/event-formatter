@@ -24,7 +24,7 @@ const createRouter = (id) => ({
   id,
   model: 'E3000',
   routerId: '',
-  mode: 'Round Robin',
+  mode: 'Spillover',
   provider: 'StarHub / Singtel',
   includeAccessPoint: false,
   accessPointId: '',
@@ -102,7 +102,7 @@ function EventFormatter() {
               ...(field === 'model' && value === 'SOHO'
                 ? { mode: 'NA' }
                 : field === 'model' && router.model === 'SOHO'
-                  ? { mode: 'Round Robin' }
+                  ? { mode: 'Spillover' }
                   : {}),
             }
           : router,
