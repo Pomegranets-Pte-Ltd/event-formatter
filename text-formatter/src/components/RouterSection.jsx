@@ -147,8 +147,8 @@ export default function RouterSection({
                       }
                       disabled={router.model === 'SOHO'}
                     >
-                      <option>Round Robin</option>
                       <option>Spillover</option>
+                      <option>Round Robin</option>
                       <option>NA</option>
                     </select>
                     {router.model === 'SOHO' && (
