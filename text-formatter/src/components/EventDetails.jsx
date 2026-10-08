@@ -3,6 +3,7 @@ const quickActions = {
     { label: 'Connection tested', text: 'Internet connection tested and working.' },
     { label: 'Wi-Fi shared', text: 'Wi-Fi details shared with the customer.' },
     { label: 'Handover done', text: 'Equipment handover completed with the customer.' },
+    { label: 'Spare equipment on site', text: 'Spare equipment is available on site.' },
   ],
   'Collection done': [
     { label: 'No issues', text: 'No issues were mentioned by customer.' },

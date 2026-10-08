@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react'
 import CroppedImagePreview from './CroppedImagePreview'
+import { getClipboardImageFile } from '../utils/imageClipboard'
 
 function getRouterSettingsSummary(router) {
   const parts = [router.provider]
@@ -29,8 +31,33 @@ export default function RouterSection({
   openRouterImageCrop,
   removeRouterImage,
 }) {
+  const sectionRef = useRef(null)
+
+  useEffect(() => {
+    if (isCollectionDone) return
+
+    function pasteIntoHoveredImage(event) {
+      if (event.defaultPrevented || !getClipboardImageFile(event.clipboardData)) return
+
+      const hoveredField = sectionRef.current?.querySelector('.speed-test-field:hover')
+      const router = routers.find(
+        (item) => String(item.id) === hoveredField?.dataset.routerId,
+      )
+      if (!router) return
+
+      // Paste normally follows keyboard focus. A hovered image field takes
+      // priority for screenshots, even when another router still has focus.
+      event.stopPropagation()
+      handleRouterImagePaste(router.id, event)
+    }
+
+    document.addEventListener('paste', pasteIntoHoveredImage, true)
+    return () => document.removeEventListener('paste', pasteIntoHoveredImage, true)
+  }, [handleRouterImagePaste, isCollectionDone, routers])
+
   return (
     <section
+      ref={sectionRef}
       className="form-section"
       hidden={isCollectionDone}
     >
@@ -230,6 +257,7 @@ export default function RouterSection({
 
             <div
               className="speed-test-field"
+              data-router-id={router.id}
               role="group"
               tabIndex={0}
               aria-labelledby={`speed-test-heading-${router.id}`}
@@ -258,7 +286,7 @@ export default function RouterSection({
                   Speed-test image
                 </span>
                 <small id={`speed-test-paste-help-${router.id}`}>
-                  Paste with Ctrl/Cmd + V
+                  Hover here and paste with Ctrl/Cmd + V
                 </small>
               </div>
 

@@ -14,6 +14,19 @@ Turning event deployment details into a consistent, copy-ready group chat update
 - A guided form that keeps optional router and event details collapsed until needed
 - Quick actions below Notes, with deployment and collection suggestions (including collection-only "No issues")
 - Responsive layout with no backend or external data storage
+- Clickable footer version with the latest 30 Git commit messages and dates
+
+## Version and change history
+
+The footer uses the build's short Git commit ID as its version. Click it to expand
+the recent commit history. Vite reads this information locally at startup/build
+time and includes it in the site; visitors do not need access to GitHub. Commit
+subjects appear as written, so use clear messages describing what changed.
+
+GitHub Pages checks out the full history so deployments include previous commits.
+Uncommitted work is marked as local changes and appears in the history only after
+it is committed and rebuilt. Restart the dev server after making new commits to
+refresh the version. Builds without Git history display an unavailable message.
 
 ## Source layout
 

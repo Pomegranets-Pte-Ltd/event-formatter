@@ -40,6 +40,82 @@
   color: #303817;
 }
 
+.version-history {
+  margin-bottom: 12px;
+}
+
+.version-history > summary {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 6px;
+  color: #4d5725;
+  cursor: pointer;
+}
+
+.version-history > summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.version-history > summary:focus-visible {
+  outline: 2px solid #879553;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.version-history-content {
+  margin-top: 10px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #dcded8;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.version-history-content h2 {
+  margin: 0;
+  color: #2b2b2b;
+  font-size: 14px;
+}
+
+.version-history-content p {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.version-history-content ol {
+  max-height: 340px;
+  overflow-y: auto;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.version-history-content li {
+  padding: 12px 0;
+  border-top: 1px solid #e6e7e3;
+}
+
+.version-history-content li p {
+  color: #444;
+}
+
+.version-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.version-history-meta strong {
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #414b22;
+  background: #edf3cf;
+  font-size: 11px;
+}
+
 .form,
 .output {
   background: #fff;

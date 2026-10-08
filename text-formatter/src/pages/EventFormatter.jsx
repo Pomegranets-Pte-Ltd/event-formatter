@@ -3,6 +3,7 @@ import ImageCropDialog from '../components/ImageCropDialog'
 import RouterSection from '../components/RouterSection'
 import EventDetails from '../components/EventDetails'
 import GeneratedResults from '../components/GeneratedResults'
+import VersionHistory from '../components/VersionHistory'
 import {
   getClipboardImageFile,
   getPastedImageName,
@@ -588,6 +589,7 @@ function EventFormatter() {
       />
 
       <footer className="page-footer">
+        <VersionHistory />
         For support, contact{' '}
         <a href="mailto:xavier.wong@pomegranets.com">
           xavier.wong@pomegranets.com
