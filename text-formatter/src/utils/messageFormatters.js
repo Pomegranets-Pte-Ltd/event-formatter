@@ -34,13 +34,13 @@ export function buildRouterCaption(router) {
     : router.mode === 'Round Robin' ? 'RR' : router.mode
   const lines = [routerLine, [router.provider, mode].filter(Boolean).join(' ')]
 
-  if (router.includeSwitch && router.switchId.trim()) {
-    lines.push(`Switch ID: ${router.switchId.trim()}`)
+  if (router.includeSwitch && router.switchSerialNumber.trim()) {
+    lines.push(`Switch serial number (last 4): ${router.switchSerialNumber.trim()}`)
   }
 
   router.accessPoints.forEach((accessPoint, index) => {
     const label = router.accessPoints.length === 1 ? 'AP' : `AP ${index + 1}`
-    lines.push(`${label} Cloud ID: ${accessPoint.cloudId.trim()}`)
+    lines.push(`${label} serial number (last 4): ${accessPoint.serialNumber.trim()}`)
   })
 
   if (router.location.trim()) {

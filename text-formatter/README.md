@@ -9,9 +9,9 @@ Turning event deployment details into a consistent, copy-ready group chat update
 - Multiple speed-test results per router, each with an optional label (for example LAN or Wi-Fi via AP AB12)
 - Separate file/clipboard image, crop, and copyable combined image and caption for each speed-test result
 - Router details in the event message, including mounting location when provided
-- Optional 8-port or 24-port switch per router, with an optional equipment ID
-- Add or remove multiple access points per router, each with its own four-character AP Cloud ID
-- Switch details and all AP IDs included in event updates and speed-test captions
+- Optional 8-port or 24-port switch per router, with the last 4 characters of its serial number (optional)
+- Add or remove multiple access points per router, each identified by the last 4 characters of its serial number
+- Switch details and AP serial numbers (last 4) included in event updates and speed-test captions
 - Optional provider, collection, location, and notes fields
 - Repeatable SSID and password rows
 - Form validation, formatted preview, and one-click copy

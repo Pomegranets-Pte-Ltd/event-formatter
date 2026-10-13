@@ -353,13 +353,21 @@
 
 .router-equipment {
   margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #ecece9;
+  padding: 14px;
+  background: #fff3d8;
+  border: 1px solid #dbc48c;
+  border-left: 4px solid #aa731d;
+  border-radius: 8px;
 }
 
 .router-equipment h3 {
   margin: 0;
+  color: #67450e;
   font-size: 13px;
+}
+
+.router-equipment .subsection-heading p {
+  color: #68542e;
 }
 
 .access-point-list {
@@ -372,10 +380,14 @@
 }
 
 .access-point-row {
+  padding: 10px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
+  background: #fffcf5;
+  border: 1px solid #e5d7b8;
+  border-radius: 6px;
 }
 
 .access-point-row .remove-button {
@@ -444,6 +456,26 @@ button {
 .text-button:hover,
 .clear-button:hover {
   background: #f0f2e8;
+}
+
+.router-equipment > .add-button {
+  color: #67450e;
+  background: #fff8e9;
+  border-color: #b99a57;
+}
+
+.router-equipment > .add-button:hover {
+  background: #f7e8c4;
+}
+
+.speed-test-list > .add-button {
+  color: #244e7b;
+  background: #e2edfb;
+  border-color: #91adc9;
+}
+
+.speed-test-list > .add-button:hover {
+  background: #d7e7fa;
 }
 
 .quick-actions {
@@ -592,27 +624,38 @@ button {
 .router-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
 .router-block {
   padding: 14px;
-  background: #fafbf8;
-  border: 1px solid #e3e4df;
-  border-radius: 7px;
+  background: #f3f5f2;
+  border: 2px solid #8fa697;
+  border-radius: 10px;
 }
 
 .router-block-header {
-  margin-bottom: 12px;
+  margin: -14px -14px 16px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  background: #263f35;
+  border-radius: 8px 8px 0 0;
 }
 
 .router-block-header strong {
-  color: #4b4d47;
-  font-size: 13px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.router-block-header .inline-remove {
+  color: #ffd4cb;
+}
+
+.router-block-header .inline-remove:focus-visible {
+  outline-color: var(--accent);
 }
 
 .inline-remove {
@@ -628,7 +671,7 @@ button {
   margin-top: 12px;
   overflow: hidden;
   background: #fff;
-  border: 1px solid #e0e3da;
+  border: 1px solid #bdcbbf;
   border-radius: 7px;
 }
 
@@ -655,6 +698,7 @@ button {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
+  background: #e5eee5;
 }
 
 .router-settings > summary::after,
@@ -681,6 +725,10 @@ button {
   background: #f7f8f3;
 }
 
+.router-settings > summary:hover {
+  background: #dce8dc;
+}
+
 .router-settings > summary:focus-visible,
 .optional-details > summary:focus-visible {
   outline: 3px solid rgba(151, 174, 42, 0.35);
@@ -696,7 +744,7 @@ button {
 .router-settings > summary > small {
   min-width: 0;
   overflow: hidden;
-  color: #767b72;
+  color: #53634f;
   font-size: 11px;
   text-align: right;
   text-overflow: ellipsis;
@@ -705,7 +753,7 @@ button {
 
 .router-settings-content {
   padding: 14px 12px 12px;
-  border-top: 1px solid #e6e8e1;
+  border-top: 1px solid #bdcbbf;
 }
 
 .router-location-field {
@@ -713,34 +761,38 @@ button {
 }
 
 .speed-test-field {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e8eae4;
-  border-radius: 4px;
+  margin-top: 16px;
+  padding: 14px;
+  background: #eaf2fc;
+  border: 1px solid #b8cce6;
+  border-left: 4px solid #4e79aa;
+  border-radius: 8px;
 }
 
 .speed-test-field:focus-visible {
-  outline: 3px solid rgba(151, 174, 42, 0.35);
-  outline-offset: 5px;
+  outline: 3px solid #4e79aa;
+  outline-offset: 3px;
 }
 
 .speed-test-heading {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
+  border-bottom: 1px solid #c4d6eb;
 }
 
 .speed-test-heading > span {
-  color: #444;
+  color: #204c7a;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .speed-test-help {
   margin: 8px 0;
-  color: #70766c;
+  color: #4e627a;
   font-size: 11px;
   font-weight: 400;
   line-height: 1.5;
@@ -1501,6 +1553,18 @@ button {
 
   .router-block {
     padding: 14px;
+  }
+
+  .access-point-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .access-point-row .remove-button {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: end;
+    margin-top: 0;
   }
 
   .router-settings > summary {

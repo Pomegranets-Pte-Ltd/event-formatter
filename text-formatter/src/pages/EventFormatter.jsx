@@ -31,7 +31,7 @@ const createRouter = (id) => ({
   provider: 'StarHub / Singtel',
   includeSwitch: false,
   switchPorts: '8',
-  switchId: '',
+  switchSerialNumber: '',
   accessPoints: [],
   location: '',
   speedTests: [createSpeedTest(1)],
@@ -120,6 +120,7 @@ function EventFormatter() {
       [id]: {
         ...current[id],
         [field]: '',
+        ...(field === 'includeSwitch' && !value ? { switchSerialNumber: '' } : {}),
       },
     }))
     clearOutput()
@@ -129,7 +130,7 @@ function EventFormatter() {
     const id = nextAccessPointId.current++
     setRouters((current) => current.map((router) =>
       router.id === routerId
-        ? { ...router, accessPoints: [...router.accessPoints, { id, cloudId: '' }] }
+        ? { ...router, accessPoints: [...router.accessPoints, { id, serialNumber: '' }] }
         : router,
     ))
     clearOutput()
@@ -141,7 +142,7 @@ function EventFormatter() {
         ? {
             ...router,
             accessPoints: router.accessPoints.map((accessPoint) =>
-              accessPoint.id === accessPointId ? { ...accessPoint, cloudId: value } : accessPoint,
+              accessPoint.id === accessPointId ? { ...accessPoint, serialNumber: value } : accessPoint,
             ),
           }
         : router,

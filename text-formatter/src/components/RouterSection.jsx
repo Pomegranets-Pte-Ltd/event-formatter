@@ -211,6 +211,7 @@ export default function RouterSection({
                   router={router}
                   routerNumber={index + 1}
                   errors={routerErrors[router.id]?.accessPoints}
+                  switchError={routerErrors[router.id]?.switchSerialNumber}
                   updateRouter={updateRouter}
                   addAccessPoint={addAccessPoint}
                   updateAccessPoint={updateAccessPoint}

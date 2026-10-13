@@ -2,6 +2,7 @@ export default function RouterEquipment({
   router,
   routerNumber,
   errors = {},
+  switchError,
   updateRouter,
   addAccessPoint,
   updateAccessPoint,
@@ -40,13 +41,20 @@ export default function RouterEquipment({
             </select>
           </label>
           <label className="field">
-            <span>Switch ID (optional)</span>
+            <span>Switch serial number (last 4, optional)</span>
             <input
-              value={router.switchId}
-              onChange={(event) => updateRouter(router.id, 'switchId', event.target.value)}
-              placeholder="Equipment ID"
-              aria-label={`Router ${routerNumber} switch ID`}
+              value={router.switchSerialNumber}
+              onChange={(event) => updateRouter(router.id, 'switchSerialNumber', event.target.value)}
+              placeholder="Last 4 characters"
+              maxLength={4}
+              pattern="[A-Za-z0-9]{4}"
+              autoCapitalize="characters"
+              spellCheck={false}
+              aria-label={`Router ${routerNumber} switch serial number (last 4)`}
+              aria-invalid={Boolean(switchError)}
+              aria-describedby={switchError ? `switch-error-${router.id}` : undefined}
             />
+            {switchError && <small id={`switch-error-${router.id}`}>{switchError}</small>}
           </label>
         </div>
       )}
@@ -57,16 +65,16 @@ export default function RouterEquipment({
           return (
             <div className="access-point-row" key={accessPoint.id}>
               <label className="field">
-                <span>AP {index + 1} Cloud ID *</span>
+                <span>AP {index + 1} serial number (last 4) *</span>
                 <input
-                  value={accessPoint.cloudId}
+                  value={accessPoint.serialNumber}
                   onChange={(event) => updateAccessPoint(router.id, accessPoint.id, event.target.value)}
                   placeholder="Last 4 characters"
                   maxLength={4}
                   pattern="[A-Za-z0-9]{4}"
                   autoCapitalize="characters"
                   spellCheck={false}
-                  aria-label={`Router ${routerNumber} AP ${index + 1} Cloud ID`}
+                  aria-label={`Router ${routerNumber} AP ${index + 1} serial number (last 4)`}
                   aria-invalid={Boolean(errors[accessPoint.id])}
                   aria-describedby={errors[accessPoint.id] ? errorId : undefined}
                 />

@@ -33,7 +33,7 @@ export default function SpeedTestFields({
             onPaste={(event) => handleRouterImagePaste(router.id, test.id, event)}
           >
             <div className="speed-test-heading">
-              <span id={`${fieldId}-heading`}>Speed-test result {index + 1}</span>
+              <span id={`${fieldId}-heading`}>Router {routerNumber} &middot; Speed-test result {index + 1}</span>
               {router.speedTests.length > 1 && (
                 <button
                   className="inline-remove"
