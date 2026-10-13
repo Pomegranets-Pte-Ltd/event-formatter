@@ -14,6 +14,7 @@ Turning event deployment details into a consistent, copy-ready group chat update
 - Switch details and AP serial numbers (last 4) included in event updates and speed-test captions
 - Optional provider, collection, location, and notes fields
 - Repeatable SSID and password rows
+- Wi-Fi fields require an access point on at least one router; removing all APs disables the fields and omits Wi-Fi details from generated updates
 - Form validation, formatted preview, and one-click copy
 - A guided form that keeps optional router and event details collapsed until needed
 - Quick actions below Notes, with deployment and collection suggestions (including collection-only "No issues")

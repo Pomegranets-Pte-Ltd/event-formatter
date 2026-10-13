@@ -12,14 +12,14 @@ const quickActions = {
   ],
 }
 
-function getEventDetailsSummary(form, networks) {
+function getEventDetailsSummary(form, networks, hasAccessPoint) {
   if (form.statusUpdate === 'Collection done') {
     return form.notes.trim() ? 'Notes added' : 'Notes'
   }
 
-  const startedNetworks = networks.filter(
+  const startedNetworks = hasAccessPoint ? networks.filter(
     (network) => network.ssid.trim() || network.password.trim(),
-  ).length
+  ).length : 0
   const details = []
 
   if (startedNetworks) {
@@ -37,6 +37,7 @@ function getEventDetailsSummary(form, networks) {
 
 export default function EventDetails({
   form,
+  hasAccessPoint,
   networks,
   networkErrors,
   updateField,
@@ -57,7 +58,7 @@ export default function EventDetails({
           </span>
           <strong>More event details</strong>
         </span>
-        <small>{getEventDetailsSummary(form, networks)}</small>
+        <small>{getEventDetailsSummary(form, networks, hasAccessPoint)}</small>
       </summary>
 
       <div className="optional-details-content">
@@ -65,67 +66,74 @@ export default function EventDetails({
           <div className="subsection-heading">
             <div>
               <h2>Wi-Fi</h2>
-              <p>Add only when the event network needs to be shared.</p>
+              <p id="wifi-availability" role="status">
+                {hasAccessPoint
+                  ? 'Add only when the event network needs to be shared.'
+                  : 'Add an access point under Router details > Connected equipment to enter an SSID and password.'}
+              </p>
             </div>
           </div>
 
-          <div className="network-list">
-            {networks.map((network, index) => (
-              <div
-                className={`network-row ${networks.length === 1 ? 'single-network' : ''}`}
-                key={network.id}
-              >
-                {networks.length > 1 && (
-                  <span className="network-number">{index + 1}</span>
-                )}
-
-                <label className="field">
-                  <span>SSID</span>
-                  <input
-                    value={network.ssid}
-                    onChange={(event) => updateNetwork(network.id, 'ssid', event.target.value)}
-                    placeholder="Network name"
-                    aria-label={`Wi-Fi network ${index + 1} SSID`}
-                    aria-invalid={Boolean(networkErrors[network.id]?.ssid)}
-                    aria-describedby={networkErrors[network.id]?.ssid ? `ssid-error-${network.id}` : undefined}
-                  />
-                  {networkErrors[network.id]?.ssid && (
-                    <small id={`ssid-error-${network.id}`}>{networkErrors[network.id].ssid}</small>
+          <fieldset className="wifi-fields" disabled={!hasAccessPoint} aria-describedby="wifi-availability">
+            <legend className="sr-only">Wi-Fi network details</legend>
+            <div className="network-list">
+              {networks.map((network, index) => (
+                <div
+                  className={`network-row ${networks.length === 1 ? 'single-network' : ''}`}
+                  key={network.id}
+                >
+                  {networks.length > 1 && (
+                    <span className="network-number">{index + 1}</span>
                   )}
-                </label>
 
-                <label className="field">
-                  <span>Password</span>
-                  <input
-                    value={network.password}
-                    onChange={(event) => updateNetwork(network.id, 'password', event.target.value)}
-                    placeholder="Network password"
-                    aria-label={`Wi-Fi network ${index + 1} password`}
-                    aria-invalid={Boolean(networkErrors[network.id]?.password)}
-                    aria-describedby={networkErrors[network.id]?.password ? `password-error-${network.id}` : undefined}
-                  />
-                  {networkErrors[network.id]?.password && (
-                    <small id={`password-error-${network.id}`}>{networkErrors[network.id].password}</small>
+                  <label className="field">
+                    <span>SSID</span>
+                    <input
+                      value={network.ssid}
+                      onChange={(event) => updateNetwork(network.id, 'ssid', event.target.value)}
+                      placeholder="Network name"
+                      aria-label={`Wi-Fi network ${index + 1} SSID`}
+                      aria-invalid={Boolean(networkErrors[network.id]?.ssid)}
+                      aria-describedby={networkErrors[network.id]?.ssid ? `ssid-error-${network.id}` : undefined}
+                    />
+                    {networkErrors[network.id]?.ssid && (
+                      <small id={`ssid-error-${network.id}`}>{networkErrors[network.id].ssid}</small>
+                    )}
+                  </label>
+
+                  <label className="field">
+                    <span>Password</span>
+                    <input
+                      value={network.password}
+                      onChange={(event) => updateNetwork(network.id, 'password', event.target.value)}
+                      placeholder="Network password"
+                      aria-label={`Wi-Fi network ${index + 1} password`}
+                      aria-invalid={Boolean(networkErrors[network.id]?.password)}
+                      aria-describedby={networkErrors[network.id]?.password ? `password-error-${network.id}` : undefined}
+                    />
+                    {networkErrors[network.id]?.password && (
+                      <small id={`password-error-${network.id}`}>{networkErrors[network.id].password}</small>
+                    )}
+                  </label>
+
+                  {networks.length > 1 && (
+                    <button
+                      className="remove-button"
+                      type="button"
+                      onClick={() => removeNetwork(network.id)}
+                      aria-label={`Remove Wi-Fi network ${index + 1}`}
+                    >
+                      Remove
+                    </button>
                   )}
-                </label>
+                </div>
+              ))}
+            </div>
 
-                {networks.length > 1 && (
-                  <button
-                    className="remove-button"
-                    type="button"
-                    onClick={() => removeNetwork(network.id)}
-                    aria-label={`Remove Wi-Fi network ${index + 1}`}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <button className="text-button add-button" type="button" onClick={addNetwork}>
-            Add another Wi-Fi network
-          </button>
+            <button className="text-button add-button" type="button" onClick={addNetwork}>
+              Add another Wi-Fi network
+            </button>
+          </fieldset>
         </div>
 
         <div className="optional-group" hidden={isCollection}>
@@ -190,7 +198,8 @@ export default function EventDetails({
                     type="button"
                     key={text}
                     title={text}
-                    disabled={added}
+                    disabled={added || (label === 'Wi-Fi shared' && !hasAccessPoint)}
+                    aria-describedby={label === 'Wi-Fi shared' && !hasAccessPoint ? 'wifi-availability' : undefined}
                     onClick={() => addNote(text)}
                   >
                     {label}

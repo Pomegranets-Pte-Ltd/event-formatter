@@ -935,6 +935,20 @@ button {
   gap: 12px;
 }
 
+.wifi-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.wifi-fields:disabled input,
+.wifi-fields:disabled .add-button {
+  color: #6c7168;
+  background: #eef0ea;
+  cursor: not-allowed;
+}
+
 .network-row {
   padding: 12px;
   display: grid;

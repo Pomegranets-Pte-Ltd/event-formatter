@@ -43,6 +43,7 @@ function EventFormatter() {
   const [form, setForm] = useState(initialForm)
   const [routers, setRouters] = useState([createRouter(1)])
   const [networks, setNetworks] = useState([createNetwork(1)])
+  const hasAccessPoint = routers.some((router) => router.accessPoints.length > 0)
   const [errors, setErrors] = useState({})
   const [routerErrors, setRouterErrors] = useState({})
   const [networkErrors, setNetworkErrors] = useState({})
@@ -313,6 +314,7 @@ function EventFormatter() {
   }
 
   function updateNetwork(id, field, value) {
+    if (!hasAccessPoint) return
     setNetworks((current) =>
       current.map((network) =>
         network.id === id ? { ...network, [field]: value } : network,
@@ -326,6 +328,7 @@ function EventFormatter() {
   }
 
   function addNetwork() {
+    if (!hasAccessPoint) return
     const id = nextNetworkId.current
     nextNetworkId.current += 1
     setNetworks((current) => [...current, createNetwork(id)])
@@ -360,6 +363,7 @@ function EventFormatter() {
       })
 
       networks.forEach((network) => {
+        if (!hasAccessPoint) return
         const hasSsid = Boolean(network.ssid.trim())
         const hasPassword = Boolean(network.password.trim())
 
@@ -614,8 +618,9 @@ function EventFormatter() {
 
         <EventDetails
           form={form}
+          hasAccessPoint={hasAccessPoint}
           networks={networks}
-          networkErrors={networkErrors}
+          networkErrors={hasAccessPoint ? networkErrors : {}}
           updateField={updateField}
           updateNetwork={updateNetwork}
           addNetwork={addNetwork}

@@ -88,9 +88,10 @@ export function buildEventMessage(form, routers, networks) {
       lines.push('', `${label}: ${routerName}`, ...routerDetails)
     })
 
-    const completedNetworks = networks.filter(
+    const hasAccessPoint = routers.some((router) => router.accessPoints.length > 0)
+    const completedNetworks = hasAccessPoint ? networks.filter(
       (network) => network.ssid.trim() && network.password.trim(),
-    )
+    ) : []
 
     completedNetworks.forEach((network, index) => {
       const suffix = completedNetworks.length > 1 ? ` ${index + 1}` : ''

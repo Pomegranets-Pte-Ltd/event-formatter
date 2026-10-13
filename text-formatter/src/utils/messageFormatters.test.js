@@ -65,6 +65,16 @@ test('collection updates omit all equipment and Wi-Fi details', () => {
   'Collection completed for Event @ Test event\n\nNotes: All collected')
 })
 
+test('Wi-Fi details require an AP on at least one router', () => {
+  const networks = [{ ssid: ' Guest ', password: ' guest-pass ' }, { ssid: 'Staff', password: 'staff-pass' }]
+  const withoutAP = [router, { ...router, routerId: '6', includeSwitch: true }]
+  assert.equal(buildEventMessage(form, withoutAP, networks), buildEventMessage(form, withoutAP, []))
+  const withAP = [router, { ...withoutAP[1], accessPoints: [accessPoints[0]] }]
+  assert.ok(buildEventMessage(form, withAP, networks).endsWith(
+    'SSID 1: Guest\nPassword 1: guest-pass\n\nSSID 2: Staff\nPassword 2: staff-pass',
+  ))
+})
+
 test('AP validation reports every invalid ID by stable key and accepts no APs', () => {
   assert.deepEqual(validateRouter(router), {})
   assert.deepEqual(validateRouter({ ...router, accessPoints }), {})
