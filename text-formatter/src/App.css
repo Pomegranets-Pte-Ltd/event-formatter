@@ -22,6 +22,24 @@
   line-height: 1.45;
 }
 
+.draft-status {
+  margin: 0 0 12px;
+  color: #46584b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.draft-status-error {
+  color: #9a332d;
+}
+
+.draft-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .page-footer {
   margin-top: 24px;
   color: #70766c;

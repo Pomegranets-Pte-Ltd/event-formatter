@@ -12,6 +12,7 @@ import { buildEventMessage, buildRouterResults } from '../utils/messageFormatter
 import { validateRouter } from '../utils/routerValidation'
 import { copyText } from '../utils/clipboard'
 import { createCombinedResultImage, normalizeCrop } from '../utils/resultImage'
+import { loadEventDraft, saveEventDraft, clearEventDraft } from '../utils/eventDraft'
 
 const initialForm = {
   eventName: '',
@@ -44,6 +45,10 @@ function EventFormatter() {
   const [routers, setRouters] = useState([createRouter(1)])
   const [expandedRouterId, setExpandedRouterId] = useState(1)
   const [networks, setNetworks] = useState([createNetwork(1)])
+  const [draftReady, setDraftReady] = useState(false)
+  const [savedDraft, setSavedDraft] = useState(null)
+  const [draftRestored, setDraftRestored] = useState(false)
+  const [draftError, setDraftError] = useState('')
   const hasAccessPoint = routers.some((router) => router.accessPoints.length > 0)
   const [errors, setErrors] = useState({})
   const [routerErrors, setRouterErrors] = useState({})
@@ -64,6 +69,84 @@ function EventFormatter() {
   const outputRef = useRef(null)
   const cropTriggerRef = useRef(null)
   const imageUrlsRef = useRef(new Set())
+  const skipDraftSaveRef = useRef(true)
+  const draftRevisionRef = useRef(0)
+  const initialDraftRef = useRef({ form, routers, networks, expandedRouterId })
+
+  const draftIsSaved = savedDraft?.form === form && savedDraft?.routers === routers &&
+    savedDraft?.networks === networks && savedDraft?.expandedRouterId === expandedRouterId
+
+  useEffect(() => {
+    let cancelled = false
+    loadEventDraft().then((draft) => {
+      if (cancelled) return
+      if (draft) {
+        const restoredRouters = draft.routers.map((router) => ({
+          ...router,
+          speedTests: router.speedTests.map((test) => {
+            let image = null
+            if (test.image) {
+              const previewUrl = URL.createObjectURL(test.image.file)
+              imageUrlsRef.current.add(previewUrl)
+              image = { ...test.image, previewUrl, crop: normalizeCrop(test.image.crop) }
+            }
+            return { ...test, image, error: '' }
+          }),
+        }))
+        const restored = { ...draft, routers: restoredRouters }
+        setForm(restored.form)
+        setRouters(restored.routers)
+        setNetworks(restored.networks)
+        setExpandedRouterId(restored.expandedRouterId)
+        nextRouterId.current = Math.max(...restored.routers.map((router) => router.id)) + 1
+        nextNetworkId.current = Math.max(...restored.networks.map((network) => network.id)) + 1
+        nextAccessPointId.current = Math.max(0, ...restored.routers.flatMap((router) => router.accessPoints.map((ap) => ap.id))) + 1
+        nextSpeedTestId.current = Math.max(1, ...restored.routers.flatMap((router) => router.speedTests.map((test) => test.id))) + 1
+        setSavedDraft(restored)
+        setDraftRestored(true)
+      } else {
+        setSavedDraft(initialDraftRef.current)
+      }
+      setDraftReady(true)
+    }).catch(() => {
+      if (cancelled) return
+      setSavedDraft(initialDraftRef.current)
+      setDraftError('Draft recovery is unavailable. New changes may not survive a refresh.')
+      setDraftReady(true)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!draftReady) return
+    if (skipDraftSaveRef.current) {
+      skipDraftSaveRef.current = false
+      return
+    }
+    const draft = { form, routers, networks, expandedRouterId }
+    const revision = ++draftRevisionRef.current
+    let cancelled = false
+    saveEventDraft(draft).then(() => {
+      if (cancelled || revision !== draftRevisionRef.current) return
+      setSavedDraft(draft)
+      setDraftRestored(false)
+      setDraftError('')
+    }).catch(() => {
+      if (cancelled || revision !== draftRevisionRef.current) return
+      setDraftError('Could not save this draft. Keep this page open to avoid losing changes.')
+    })
+    return () => { cancelled = true }
+  }, [draftReady, form, routers, networks, expandedRouterId])
+
+  useEffect(() => {
+    if (!draftReady || draftIsSaved) return
+    function warnBeforeLeaving(event) {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warnBeforeLeaving)
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving)
+  }, [draftReady, draftIsSaved])
 
   useEffect(() => {
     const imageUrls = imageUrlsRef.current
@@ -515,10 +598,23 @@ function EventFormatter() {
 
   function resetForm() {
     routers.forEach((router) => router.speedTests.forEach((test) => releaseImage(test.image)))
+    const resetRouters = [createRouter(1)]
+    const resetNetworks = [createNetwork(1)]
+    const revision = ++draftRevisionRef.current
+    skipDraftSaveRef.current = true
+    clearEventDraft().then(() => {
+      if (revision !== draftRevisionRef.current) return
+      setSavedDraft({ form: initialForm, routers: resetRouters, networks: resetNetworks, expandedRouterId: 1 })
+      setDraftRestored(false)
+      setDraftError('')
+    }).catch(() => {
+      if (revision !== draftRevisionRef.current) return
+      setDraftError('The form was reset, but the saved draft could not be cleared. Reloading may restore the previous draft.')
+    })
     setForm(initialForm)
-    setRouters([createRouter(1)])
+    setRouters(resetRouters)
     setExpandedRouterId(1)
-    setNetworks([createNetwork(1)])
+    setNetworks(resetNetworks)
     nextRouterId.current = 2
     nextNetworkId.current = 2
     nextAccessPointId.current = 1
@@ -563,92 +659,102 @@ function EventFormatter() {
         <p>Built for Pomegranets internal usage.</p>
       </header>
 
+      <p className={`draft-status${draftError ? ' draft-status-error' : ''}`} role="status">
+        {!draftReady ? 'Checking for a saved draft…'
+          : draftError || (!draftIsSaved ? 'Saving draft…'
+            : draftRestored ? 'Draft restored. Saved on this device for 24 hours.'
+              : 'Draft autosave is on. Saved on this device for 24 hours.')}
+      </p>
+
       <form
         className="form"
         ref={formRef}
         onSubmit={formatMessage}
         noValidate
       >
-        <section className="form-section event-section" aria-label="Event">
-          <div className="section-heading">
-            <span className="section-step" aria-hidden="true">1</span>
-            <h2>Event</h2>
+        <fieldset className="draft-fields" disabled={!draftReady}>
+          <legend className="sr-only">Event update</legend>
+          <section className="form-section event-section" aria-label="Event">
+            <div className="section-heading">
+              <span className="section-step" aria-hidden="true">1</span>
+              <h2>Event</h2>
+            </div>
+            <div className="field-grid two-columns">
+              <label className="field">
+                <span>Event *</span>
+                <input
+                  name="eventName"
+                  value={form.eventName}
+                  onChange={updateField}
+                  placeholder="e.g. Unearthed Productions"
+                  aria-invalid={Boolean(errors.eventName)}
+                  aria-describedby={errors.eventName ? 'event-error' : undefined}
+                />
+                {errors.eventName && <small id="event-error">{errors.eventName}</small>}
+              </label>
+
+              <fieldset className="status-field">
+                <legend>Status</legend>
+                <div className="status-options">
+                  {['Setup done', 'Collection done'].map((status) => (
+                    <label className="status-option" key={status}>
+                      <input
+                        type="radio"
+                        name="statusUpdate"
+                        value={status}
+                        checked={form.statusUpdate === status}
+                        onChange={updateField}
+                      />
+                      <span>{status}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            </div>
+          </section>
+
+          <RouterSection
+            routers={routers}
+            expandedRouterId={expandedRouterId}
+            toggleRouter={(id) => setExpandedRouterId((current) => current === id ? null : id)}
+            routerErrors={routerErrors}
+            isCollectionDone={form.statusUpdate === 'Collection done'}
+            updateRouter={updateRouter}
+            removeRouter={removeRouter}
+            addRouter={addRouter}
+            addAccessPoint={addAccessPoint}
+            updateAccessPoint={updateAccessPoint}
+            removeAccessPoint={removeAccessPoint}
+            addSpeedTest={addSpeedTest}
+            updateSpeedTest={updateSpeedTest}
+            removeSpeedTest={removeSpeedTest}
+            handleRouterImageChange={handleRouterImageChange}
+            handleRouterImagePaste={handleRouterImagePaste}
+            openRouterImageCrop={openRouterImageCrop}
+            removeRouterImage={removeRouterImage}
+          />
+
+          <EventDetails
+            form={form}
+            hasAccessPoint={hasAccessPoint}
+            networks={networks}
+            networkErrors={hasAccessPoint ? networkErrors : {}}
+            updateField={updateField}
+            updateNetwork={updateNetwork}
+            addNetwork={addNetwork}
+            removeNetwork={removeNetwork}
+            addNote={addNote}
+          />
+
+          <div className="form-actions">
+            <button className="clear-button" type="button" onClick={resetForm}>
+              Reset
+            </button>
+            <button className="primary-button" type="submit">
+              Generate update
+            </button>
           </div>
-          <div className="field-grid two-columns">
-            <label className="field">
-              <span>Event *</span>
-              <input
-                name="eventName"
-                value={form.eventName}
-                onChange={updateField}
-                placeholder="e.g. Unearthed Productions"
-                aria-invalid={Boolean(errors.eventName)}
-                aria-describedby={errors.eventName ? 'event-error' : undefined}
-              />
-              {errors.eventName && <small id="event-error">{errors.eventName}</small>}
-            </label>
-
-            <fieldset className="status-field">
-              <legend>Status</legend>
-              <div className="status-options">
-                {['Setup done', 'Collection done'].map((status) => (
-                  <label className="status-option" key={status}>
-                    <input
-                      type="radio"
-                      name="statusUpdate"
-                      value={status}
-                      checked={form.statusUpdate === status}
-                      onChange={updateField}
-                    />
-                    <span>{status}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          </div>
-        </section>
-
-        <RouterSection
-          routers={routers}
-          expandedRouterId={expandedRouterId}
-          toggleRouter={(id) => setExpandedRouterId((current) => current === id ? null : id)}
-          routerErrors={routerErrors}
-          isCollectionDone={form.statusUpdate === 'Collection done'}
-          updateRouter={updateRouter}
-          removeRouter={removeRouter}
-          addRouter={addRouter}
-          addAccessPoint={addAccessPoint}
-          updateAccessPoint={updateAccessPoint}
-          removeAccessPoint={removeAccessPoint}
-          addSpeedTest={addSpeedTest}
-          updateSpeedTest={updateSpeedTest}
-          removeSpeedTest={removeSpeedTest}
-          handleRouterImageChange={handleRouterImageChange}
-          handleRouterImagePaste={handleRouterImagePaste}
-          openRouterImageCrop={openRouterImageCrop}
-          removeRouterImage={removeRouterImage}
-        />
-
-        <EventDetails
-          form={form}
-          hasAccessPoint={hasAccessPoint}
-          networks={networks}
-          networkErrors={hasAccessPoint ? networkErrors : {}}
-          updateField={updateField}
-          updateNetwork={updateNetwork}
-          addNetwork={addNetwork}
-          removeNetwork={removeNetwork}
-          addNote={addNote}
-        />
-
-        <div className="form-actions">
-          <button className="clear-button" type="button" onClick={resetForm}>
-            Reset
-          </button>
-          <button className="primary-button" type="submit">
-            Generate update
-          </button>
-        </div>
+        </fieldset>
       </form>
 
       <GeneratedResults

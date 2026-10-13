@@ -20,7 +20,9 @@ Turning event deployment details into a consistent, copy-ready group chat update
 - Collapsed router summaries show model, ID, equipment and image counts; validation opens the first router needing correction
 - Optional event details stay collapsed until needed
 - Quick actions below Notes, with deployment and collection suggestions (including collection-only "No issues")
-- Responsive layout with no backend or external data storage
+- Automatic draft recovery after refresh, including Wi-Fi details, screenshots, crops and the expanded router
+- Drafts stay in this browser's IndexedDB for up to 24 hours after the last edit; expired drafts are discarded on the next visit, and Reset deletes the saved draft
+- Responsive layout with no backend or external data storage; drafts include entered passwords and images on this device, and do not sync across browsers
 - Clickable footer version with the latest 30 Git commit messages and dates
 
 ## Version and change history
@@ -51,6 +53,6 @@ The existing image preview and crop dialog live in `components/`. Message format
 ## Checks
 
 Run `npm run lint`, `npm run build`, and
-`node --test src/utils/messageFormatters.test.js scripts/buildInfo.test.js` from `text-formatter/`.
+`node --test src/utils/*.test.js scripts/buildInfo.test.js` from `text-formatter/`.
 
 ### Built for Pomegranets internal usage.
