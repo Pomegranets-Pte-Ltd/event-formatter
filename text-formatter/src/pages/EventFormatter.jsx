@@ -42,6 +42,7 @@ const createNetwork = (id) => ({ id, ssid: '', password: '' })
 function EventFormatter() {
   const [form, setForm] = useState(initialForm)
   const [routers, setRouters] = useState([createRouter(1)])
+  const [expandedRouterId, setExpandedRouterId] = useState(1)
   const [networks, setNetworks] = useState([createNetwork(1)])
   const hasAccessPoint = routers.some((router) => router.accessPoints.length > 0)
   const [errors, setErrors] = useState({})
@@ -297,6 +298,12 @@ function EventFormatter() {
     const id = nextRouterId.current
     nextRouterId.current += 1
     setRouters((current) => [...current, createRouter(id)])
+    setExpandedRouterId(id)
+    window.setTimeout(() => {
+      const block = formRef.current?.querySelector(`[data-router-block-id="${id}"]`)
+      block?.querySelector('select')?.focus({ preventScroll: true })
+      block?.scrollIntoView({ block: 'nearest' })
+    }, 0)
     clearOutput()
   }
 
@@ -304,6 +311,9 @@ function EventFormatter() {
     const routerToRemove = routers.find((router) => router.id === id)
     routerToRemove?.speedTests.forEach((test) => releaseImage(test.image))
     setRouters((current) => current.filter((router) => router.id !== id))
+    setExpandedRouterId((current) => current === id
+      ? routers.find((router) => router.id !== id)?.id ?? null
+      : current)
     setRouterErrors((current) => {
       const next = { ...current }
       delete next[id]
@@ -384,17 +394,17 @@ function EventFormatter() {
       Object.keys(nextRouterErrors).length ||
       Object.keys(nextNetworkErrors).length
     ) {
+      const firstInvalidRouter = routers.find((router) => nextRouterErrors[router.id])
+      if (firstInvalidRouter) setExpandedRouterId(firstInvalidRouter.id)
       window.setTimeout(() => {
         const invalidFields = Array.from(
           document.querySelectorAll('[aria-invalid="true"]'),
         )
 
-        invalidFields.forEach((invalidField) => {
-          const containingDetails = invalidField.closest('details')
-
-          if (containingDetails) containingDetails.open = true
-        })
-        invalidFields[0]?.focus()
+        const firstInvalidField = invalidFields.find((field) => !field.closest('[hidden]'))
+        const containingDetails = firstInvalidField?.closest('details')
+        if (containingDetails) containingDetails.open = true
+        firstInvalidField?.focus()
       }, 0)
       return
     }
@@ -507,6 +517,7 @@ function EventFormatter() {
     routers.forEach((router) => router.speedTests.forEach((test) => releaseImage(test.image)))
     setForm(initialForm)
     setRouters([createRouter(1)])
+    setExpandedRouterId(1)
     setNetworks([createNetwork(1)])
     nextRouterId.current = 2
     nextNetworkId.current = 2
@@ -599,6 +610,8 @@ function EventFormatter() {
 
         <RouterSection
           routers={routers}
+          expandedRouterId={expandedRouterId}
+          toggleRouter={(id) => setExpandedRouterId((current) => current === id ? null : id)}
           routerErrors={routerErrors}
           isCollectionDone={form.statusUpdate === 'Collection done'}
           updateRouter={updateRouter}

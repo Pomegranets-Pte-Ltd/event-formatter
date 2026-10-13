@@ -16,7 +16,9 @@ Turning event deployment details into a consistent, copy-ready group chat update
 - Repeatable SSID and password rows
 - Wi-Fi fields require an access point on at least one router; removing all APs disables the fields and omits Wi-Fi details from generated updates
 - Form validation, formatted preview, and one-click copy
-- A guided form that keeps optional router and event details collapsed until needed
+- One expanded router at a time, with settings, equipment and speed tests together; adding a router collapses the previous one
+- Collapsed router summaries show model, ID, equipment and image counts; validation opens the first router needing correction
+- Optional event details stay collapsed until needed
 - Quick actions below Notes, with deployment and collection suggestions (including collection-only "No issues")
 - Responsive layout with no backend or external data storage
 - Clickable footer version with the latest 30 Git commit messages and dates
