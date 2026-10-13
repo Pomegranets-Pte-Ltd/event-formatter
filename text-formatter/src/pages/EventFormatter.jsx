@@ -8,7 +8,8 @@ import {
   getClipboardImageFile,
   getPastedImageName,
 } from '../utils/imageClipboard'
-import { buildEventMessage, buildRouterCaption } from '../utils/messageFormatters'
+import { buildEventMessage, buildRouterResults } from '../utils/messageFormatters'
+import { validateRouter } from '../utils/routerValidation'
 import { copyText } from '../utils/clipboard'
 import { createCombinedResultImage, normalizeCrop } from '../utils/resultImage'
 
@@ -20,16 +21,20 @@ const initialForm = {
   notes: '',
 }
 
+const createSpeedTest = (id) => ({ id, label: '', image: null, error: '' })
+
 const createRouter = (id) => ({
   id,
   model: 'E3000',
   routerId: '',
   mode: 'Spillover',
   provider: 'StarHub / Singtel',
-  includeAccessPoint: false,
-  accessPointId: '',
+  includeSwitch: false,
+  switchPorts: '8',
+  switchId: '',
+  accessPoints: [],
   location: '',
-  speedTestImage: null,
+  speedTests: [createSpeedTest(1)],
 })
 
 const createNetwork = (id) => ({ id, ssid: '', password: '' })
@@ -42,7 +47,7 @@ function EventFormatter() {
   const [routerErrors, setRouterErrors] = useState({})
   const [networkErrors, setNetworkErrors] = useState({})
   const [output, setOutput] = useState(null)
-  const [cropEditorRouterId, setCropEditorRouterId] = useState(null)
+  const [cropEditor, setCropEditor] = useState(null)
   const [imagePasteAnnouncement, setImagePasteAnnouncement] = useState({
     sequence: 0,
     message: '',
@@ -51,6 +56,8 @@ function EventFormatter() {
   const [routerResultCopyStatus, setRouterResultCopyStatus] = useState({})
   const nextRouterId = useRef(2)
   const nextNetworkId = useRef(2)
+  const nextAccessPointId = useRef(1)
+  const nextSpeedTestId = useRef(2)
   const formRef = useRef(null)
   const outputRef = useRef(null)
   const cropTriggerRef = useRef(null)
@@ -87,7 +94,7 @@ function EventFormatter() {
     if (name === 'statusUpdate' && value === 'Collection done') {
       setRouterErrors({})
       setNetworkErrors({})
-      setCropEditorRouterId(null)
+      setCropEditor(null)
     }
     clearOutput()
   }
@@ -113,124 +120,173 @@ function EventFormatter() {
       [id]: {
         ...current[id],
         [field]: '',
-        ...(field === 'includeAccessPoint' && !value ? { accessPointId: '' } : {}),
       },
     }))
     clearOutput()
   }
 
-  function updateRouterImage(id, file, displayName = file?.name) {
+  function addAccessPoint(routerId) {
+    const id = nextAccessPointId.current++
+    setRouters((current) => current.map((router) =>
+      router.id === routerId
+        ? { ...router, accessPoints: [...router.accessPoints, { id, cloudId: '' }] }
+        : router,
+    ))
+    clearOutput()
+  }
+
+  function updateAccessPoint(routerId, accessPointId, value) {
+    setRouters((current) => current.map((router) =>
+      router.id === routerId
+        ? {
+            ...router,
+            accessPoints: router.accessPoints.map((accessPoint) =>
+              accessPoint.id === accessPointId ? { ...accessPoint, cloudId: value } : accessPoint,
+            ),
+          }
+        : router,
+    ))
+    clearAccessPointError(routerId, accessPointId)
+    clearOutput()
+  }
+
+  function clearAccessPointError(routerId, accessPointId) {
+    setRouterErrors((current) => {
+      const accessPoints = { ...current[routerId]?.accessPoints }
+      delete accessPoints[accessPointId]
+      return { ...current, [routerId]: { ...current[routerId], accessPoints } }
+    })
+  }
+
+  function removeAccessPoint(routerId, accessPointId) {
+    setRouters((current) => current.map((router) =>
+      router.id === routerId
+        ? { ...router, accessPoints: router.accessPoints.filter((ap) => ap.id !== accessPointId) }
+        : router,
+    ))
+    clearAccessPointError(routerId, accessPointId)
+    clearOutput()
+  }
+
+  function updateSpeedTest(routerId, speedTestId, changes) {
+    setRouters((current) => current.map((router) =>
+      router.id === routerId
+        ? {
+            ...router,
+            speedTests: router.speedTests.map((test) =>
+              test.id === speedTestId ? { ...test, ...changes } : test,
+            ),
+          }
+        : router,
+    ))
+    clearOutput()
+  }
+
+  function addSpeedTest(routerId) {
+    const id = nextSpeedTestId.current++
+    setRouters((current) => current.map((router) =>
+      router.id === routerId
+        ? { ...router, speedTests: [...router.speedTests, createSpeedTest(id)] }
+        : router,
+    ))
+    clearOutput()
+  }
+
+  function findSpeedTest(routerId, speedTestId) {
+    return routers.find((router) => router.id === routerId)
+      ?.speedTests.find((test) => test.id === speedTestId)
+  }
+
+  function removeSpeedTest(routerId, speedTestId) {
+    releaseImage(findSpeedTest(routerId, speedTestId)?.image)
+    setRouters((current) => current.map((router) =>
+      router.id === routerId
+        ? { ...router, speedTests: router.speedTests.filter((test) => test.id !== speedTestId) }
+        : router,
+    ))
+    if (cropEditor?.routerId === routerId && cropEditor.speedTestId === speedTestId) {
+      setCropEditor(null)
+    }
+    clearOutput()
+  }
+
+  function updateRouterImage(id, speedTestId, file, displayName = file?.name) {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setRouterErrors((current) => ({
-        ...current,
-        [id]: {
-          ...current[id],
-          speedTestImage: 'Choose an image file.',
-        },
-      }))
+      updateSpeedTest(id, speedTestId, { error: 'Choose an image file.' })
       return
     }
 
-    const currentImage = routers.find((router) => router.id === id)?.speedTestImage
+    const currentImage = findSpeedTest(id, speedTestId)?.image
     const previewUrl = URL.createObjectURL(file)
     imageUrlsRef.current.add(previewUrl)
 
-    setRouters((current) =>
-      current.map((router) =>
-        router.id === id
-          ? {
-              ...router,
-              speedTestImage: {
-                file,
-                name: displayName,
-                previewUrl,
-                crop: { x: 0, y: 0, width: 1, height: 1 },
-              },
-            }
-          : router,
-      ),
-    )
-    setRouterErrors((current) => ({
-      ...current,
-      [id]: { ...current[id], speedTestImage: '' },
-    }))
+    updateSpeedTest(id, speedTestId, {
+      image: {
+        file,
+        name: displayName,
+        previewUrl,
+        crop: { x: 0, y: 0, width: 1, height: 1 },
+      },
+      error: '',
+    })
     releaseImage(currentImage)
     clearOutput()
   }
 
-  function handleRouterImageChange(id, event) {
+  function handleRouterImageChange(id, speedTestId, event) {
     const file = event.target.files?.[0]
     event.target.value = ''
-    updateRouterImage(id, file)
+    updateRouterImage(id, speedTestId, file)
   }
 
-  function handleRouterImagePaste(id, event) {
+  function handleRouterImagePaste(id, speedTestId, event) {
     const clipboardFile = getClipboardImageFile(event.clipboardData)
 
     if (!clipboardFile) {
-      setRouterErrors((current) => ({
-        ...current,
-        [id]: {
-          ...current[id],
-          speedTestImage:
-            'The clipboard does not contain an image. Copy a screenshot and paste again, or choose a file.',
-        },
-      }))
+      // Text pasted into the result label should keep normal input behavior.
+      if (event.target.closest?.('input, textarea')) return
+      updateSpeedTest(id, speedTestId, {
+        error: 'The clipboard does not contain an image. Copy a screenshot and paste again, or choose a file.',
+      })
       return
     }
 
     event.preventDefault()
-    updateRouterImage(id, clipboardFile, getPastedImageName(clipboardFile))
+    updateRouterImage(id, speedTestId, clipboardFile, getPastedImageName(clipboardFile))
     setImagePasteAnnouncement((current) => ({
       sequence: current.sequence + 1,
       message: 'Screenshot pasted into the speed-test field.',
     }))
   }
 
-  function removeRouterImage(id) {
-    const currentImage = routers.find((router) => router.id === id)?.speedTestImage
+  function removeRouterImage(id, speedTestId) {
+    const currentImage = findSpeedTest(id, speedTestId)?.image
     releaseImage(currentImage)
-    setRouters((current) =>
-      current.map((router) =>
-        router.id === id ? { ...router, speedTestImage: null } : router,
-      ),
-    )
-    setRouterErrors((current) => ({
-      ...current,
-      [id]: { ...current[id], speedTestImage: '' },
-    }))
-    if (cropEditorRouterId === id) setCropEditorRouterId(null)
+    updateSpeedTest(id, speedTestId, { image: null, error: '' })
+    if (cropEditor?.routerId === id && cropEditor.speedTestId === speedTestId) {
+      setCropEditor(null)
+    }
     clearOutput()
   }
 
-  function openRouterImageCrop(id, trigger) {
+  function openRouterImageCrop(id, speedTestId, trigger) {
     cropTriggerRef.current = trigger
-    setCropEditorRouterId(id)
+    setCropEditor({ routerId: id, speedTestId })
   }
 
   function closeRouterImageCrop() {
-    setCropEditorRouterId(null)
+    setCropEditor(null)
     window.setTimeout(() => {
       if (cropTriggerRef.current?.isConnected) cropTriggerRef.current.focus()
       cropTriggerRef.current = null
     }, 0)
   }
 
-  function saveRouterImageCrop(id, crop) {
-    setRouters((current) =>
-      current.map((router) =>
-        router.id === id
-          ? {
-              ...router,
-              speedTestImage: router.speedTestImage
-                ? { ...router.speedTestImage, crop: normalizeCrop(crop) }
-                : null,
-            }
-          : router,
-      ),
-    )
+  function saveRouterImageCrop(id, speedTestId, crop) {
+    const image = findSpeedTest(id, speedTestId)?.image
+    if (image) updateSpeedTest(id, speedTestId, { image: { ...image, crop: normalizeCrop(crop) } })
     closeRouterImageCrop()
     clearOutput()
   }
@@ -244,14 +300,14 @@ function EventFormatter() {
 
   function removeRouter(id) {
     const routerToRemove = routers.find((router) => router.id === id)
-    releaseImage(routerToRemove?.speedTestImage)
+    routerToRemove?.speedTests.forEach((test) => releaseImage(test.image))
     setRouters((current) => current.filter((router) => router.id !== id))
     setRouterErrors((current) => {
       const next = { ...current }
       delete next[id]
       return next
     })
-    if (cropEditorRouterId === id) setCropEditorRouterId(null)
+    if (cropEditor?.routerId === id) setCropEditor(null)
     clearOutput()
   }
 
@@ -295,15 +351,7 @@ function EventFormatter() {
     if (!form.eventName.trim()) nextErrors.eventName = 'Enter an event name.'
     if (!isCollectionDone) {
       routers.forEach((router) => {
-        const currentErrors = {}
-
-        if (!router.routerId.trim()) currentErrors.routerId = 'Enter a router ID.'
-        if (
-          router.includeAccessPoint &&
-          !/^[a-z0-9]{4}$/i.test(router.accessPointId.trim())
-        ) {
-          currentErrors.accessPointId = 'Enter the last 4 letters or numbers.'
-        }
+        const currentErrors = validateRouter(router)
 
         if (Object.keys(currentErrors).length) {
           nextRouterErrors[router.id] = currentErrors
@@ -350,12 +398,7 @@ function EventFormatter() {
       eventMessage: buildEventMessage(form, routers, networks),
       routerResults: isCollectionDone
         ? []
-        : routers.map((router, index) => ({
-            id: router.id,
-            label: `Router ${index + 1}`,
-            caption: buildRouterCaption(router),
-            speedTestImage: router.speedTestImage,
-          })),
+        : buildRouterResults(routers),
     })
     setCopyStatus('idle')
     setRouterResultCopyStatus({})
@@ -436,8 +479,7 @@ function EventFormatter() {
       )
       const downloadUrl = URL.createObjectURL(blob)
       const fileName =
-        routerResult.caption
-          .split('\n')[0]
+        `${routerResult.caption.split('\n')[0]}-${routerResult.label}-${routerResult.id}`
           .replace(/[^a-z0-9]+/gi, '-')
           .replace(/^-|-$/g, '') || 'router-result'
       const link = document.createElement('a')
@@ -457,17 +499,19 @@ function EventFormatter() {
   }
 
   function resetForm() {
-    routers.forEach((router) => releaseImage(router.speedTestImage))
+    routers.forEach((router) => router.speedTests.forEach((test) => releaseImage(test.image)))
     setForm(initialForm)
     setRouters([createRouter(1)])
     setNetworks([createNetwork(1)])
     nextRouterId.current = 2
     nextNetworkId.current = 2
+    nextAccessPointId.current = 1
+    nextSpeedTestId.current = 2
     setErrors({})
     setRouterErrors({})
     setNetworkErrors({})
     setOutput(null)
-    setCropEditorRouterId(null)
+    setCropEditor(null)
     setImagePasteAnnouncement({ sequence: 0, message: '' })
     setCopyStatus('idle')
     setRouterResultCopyStatus({})
@@ -487,10 +531,14 @@ function EventFormatter() {
   }
 
   const cropEditorRouterIndex = routers.findIndex(
-    (router) => router.id === cropEditorRouterId,
+    (router) => router.id === cropEditor?.routerId,
   )
   const cropEditorRouter =
     cropEditorRouterIndex >= 0 ? routers[cropEditorRouterIndex] : null
+  const cropEditorTestIndex = cropEditorRouter?.speedTests.findIndex(
+    (test) => test.id === cropEditor?.speedTestId,
+  ) ?? -1
+  const cropEditorTest = cropEditorRouter?.speedTests[cropEditorTestIndex]
 
   return (
     <main className="page">
@@ -551,6 +599,12 @@ function EventFormatter() {
           updateRouter={updateRouter}
           removeRouter={removeRouter}
           addRouter={addRouter}
+          addAccessPoint={addAccessPoint}
+          updateAccessPoint={updateAccessPoint}
+          removeAccessPoint={removeAccessPoint}
+          addSpeedTest={addSpeedTest}
+          updateSpeedTest={updateSpeedTest}
+          removeSpeedTest={removeSpeedTest}
           handleRouterImageChange={handleRouterImageChange}
           handleRouterImagePaste={handleRouterImagePaste}
           openRouterImageCrop={openRouterImageCrop}
@@ -596,12 +650,12 @@ function EventFormatter() {
         </a>
       </footer>
 
-      {cropEditorRouter?.speedTestImage && (
+      {cropEditorTest?.image && (
         <ImageCropDialog
-          image={cropEditorRouter.speedTestImage}
-          routerLabel={`Router ${cropEditorRouterIndex + 1}`}
+          image={cropEditorTest.image}
+          routerLabel={`Router ${cropEditorRouterIndex + 1} - ${cropEditorTest.label.trim() || `Speed test ${cropEditorTestIndex + 1}`}`}
           onCancel={closeRouterImageCrop}
-          onSave={(crop) => saveRouterImageCrop(cropEditorRouter.id, crop)}
+          onSave={(crop) => saveRouterImageCrop(cropEditorRouter.id, cropEditorTest.id, crop)}
         />
       )}
 

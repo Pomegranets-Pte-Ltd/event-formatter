@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import CroppedImagePreview from './CroppedImagePreview'
+import SpeedTestFields from './SpeedTestFields'
+import RouterEquipment from './RouterEquipment'
 import { getClipboardImageFile } from '../utils/imageClipboard'
 
 function getRouterSettingsSummary(router) {
@@ -8,12 +9,9 @@ function getRouterSettingsSummary(router) {
   if (router.model !== 'SOHO') parts.push(router.mode)
 
   if (router.location.trim()) parts.push(router.location.trim())
-  if (router.includeAccessPoint) {
-    parts.push(
-      router.accessPointId.trim()
-        ? `AP ${router.accessPointId.trim()}`
-        : 'AP included',
-    )
+  if (router.includeSwitch) parts.push(`${router.switchPorts}-port switch`)
+  if (router.accessPoints.length) {
+    parts.push(`${router.accessPoints.length} AP${router.accessPoints.length === 1 ? '' : 's'}`)
   }
 
   return parts.join(' \u00b7 ')
@@ -26,6 +24,12 @@ export default function RouterSection({
   updateRouter,
   removeRouter,
   addRouter,
+  addAccessPoint,
+  updateAccessPoint,
+  removeAccessPoint,
+  addSpeedTest,
+  updateSpeedTest,
+  removeSpeedTest,
   handleRouterImageChange,
   handleRouterImagePaste,
   openRouterImageCrop,
@@ -43,12 +47,15 @@ export default function RouterSection({
       const router = routers.find(
         (item) => String(item.id) === hoveredField?.dataset.routerId,
       )
-      if (!router) return
+      const speedTest = router?.speedTests.find(
+        (test) => String(test.id) === hoveredField?.dataset.speedTestId,
+      )
+      if (!speedTest) return
 
       // Paste normally follows keyboard focus. A hovered image field takes
       // priority for screenshots, even when another router still has focus.
       event.stopPropagation()
-      handleRouterImagePaste(router.id, event)
+      handleRouterImagePaste(router.id, speedTest.id, event)
     }
 
     document.addEventListener('paste', pasteIntoHoveredImage, true)
@@ -200,182 +207,29 @@ export default function RouterSection({
                   </label>
                 </div>
 
-                <div className="ap-row">
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={router.includeAccessPoint}
-                      onChange={(event) =>
-                        updateRouter(
-                          router.id,
-                          'includeAccessPoint',
-                          event.target.checked,
-                        )
-                      }
-                    />
-                    Include access point
-                  </label>
-
-                  {router.includeAccessPoint && (
-                    <label className="field ap-id">
-                      <span>AP Cloud ID *</span>
-                      <input
-                        value={router.accessPointId}
-                        onChange={(event) =>
-                          updateRouter(
-                            router.id,
-                            'accessPointId',
-                            event.target.value,
-                          )
-                        }
-                        placeholder="Last 4 characters"
-                        maxLength="4"
-                        inputMode="text"
-                        pattern="[A-Za-z0-9]{4}"
-                        autoCapitalize="characters"
-                        spellCheck="false"
-                        aria-label={`Router ${index + 1} AP Cloud ID`}
-                        aria-invalid={Boolean(
-                          routerErrors[router.id]?.accessPointId,
-                        )}
-                        aria-describedby={
-                          routerErrors[router.id]?.accessPointId
-                            ? `ap-error-${router.id}`
-                            : undefined
-                        }
-                      />
-                      {routerErrors[router.id]?.accessPointId && (
-                        <small id={`ap-error-${router.id}`}>
-                          {routerErrors[router.id].accessPointId}
-                        </small>
-                      )}
-                    </label>
-                  )}
-                </div>
+                <RouterEquipment
+                  router={router}
+                  routerNumber={index + 1}
+                  errors={routerErrors[router.id]?.accessPoints}
+                  updateRouter={updateRouter}
+                  addAccessPoint={addAccessPoint}
+                  updateAccessPoint={updateAccessPoint}
+                  removeAccessPoint={removeAccessPoint}
+                />
               </div>
             </details>
 
-            <div
-              className="speed-test-field"
-              data-router-id={router.id}
-              role="group"
-              tabIndex={0}
-              aria-labelledby={`speed-test-heading-${router.id}`}
-              aria-describedby={[
-                `speed-test-paste-help-${router.id}`,
-                routerErrors[router.id]?.speedTestImage
-                  ? `speed-test-error-${router.id}`
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              aria-invalid={Boolean(
-                routerErrors[router.id]?.speedTestImage,
-              )}
-              onPointerDown={(event) => {
-                if (
-                  !event.target.closest?.('button, label, input')
-                ) {
-                  event.currentTarget.focus()
-                }
-              }}
-              onPaste={(event) => handleRouterImagePaste(router.id, event)}
-            >
-              <div className="speed-test-heading">
-                <span id={`speed-test-heading-${router.id}`}>
-                  Speed-test image
-                </span>
-                <small id={`speed-test-paste-help-${router.id}`}>
-                  Hover here and paste with Ctrl/Cmd + V
-                </small>
-              </div>
-
-              {router.speedTestImage ? (
-                <div className="selected-image">
-                  <CroppedImagePreview
-                    image={router.speedTestImage}
-                    alt={`Selected speed-test for router ${index + 1}`}
-                  />
-                  <div className="selected-image-details">
-                    <strong title={router.speedTestImage.name}>
-                      {router.speedTestImage.name}
-                    </strong>
-                    <div className="selected-image-actions">
-                      <button
-                        className="image-action"
-                        type="button"
-                        onClick={(event) =>
-                          openRouterImageCrop(router.id, event.currentTarget)
-                        }
-                        aria-label={`Crop or resize speed-test image for router ${index + 1}`}
-                      >
-                        Crop
-                      </button>
-                      <label className="image-action">
-                        Replace
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(event) =>
-                            handleRouterImageChange(router.id, event)
-                          }
-                          aria-label={`Replace speed-test image for router ${index + 1}`}
-                          aria-invalid={Boolean(
-                            routerErrors[router.id]?.speedTestImage,
-                          )}
-                          aria-describedby={
-                            routerErrors[router.id]?.speedTestImage
-                              ? `speed-test-error-${router.id}`
-                              : undefined
-                          }
-                        />
-                      </label>
-                      <button
-                        className="image-action image-remove"
-                        type="button"
-                        onClick={() => removeRouterImage(router.id)}
-                        aria-label={`Remove speed-test image from router ${index + 1}`}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <label className="image-upload">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) =>
-                      handleRouterImageChange(router.id, event)
-                    }
-                    aria-label={`Choose speed-test image for router ${index + 1}`}
-                    aria-invalid={Boolean(
-                      routerErrors[router.id]?.speedTestImage,
-                    )}
-                    aria-describedby={
-                      routerErrors[router.id]?.speedTestImage
-                        ? `speed-test-error-${router.id}`
-                        : `speed-test-help-${router.id}`
-                    }
-                  />
-                  <span>Choose image</span>
-                  <small id={`speed-test-help-${router.id}`}>
-                    PNG, JPG or WebP
-                  </small>
-                </label>
-              )}
-
-              {routerErrors[router.id]?.speedTestImage && (
-                <small
-                  className="image-error"
-                  id={`speed-test-error-${router.id}`}
-                  role="alert"
-                >
-                  {routerErrors[router.id].speedTestImage}
-                </small>
-              )}
-            </div>
+            <SpeedTestFields
+              router={router}
+              routerNumber={index + 1}
+              addSpeedTest={addSpeedTest}
+              updateSpeedTest={updateSpeedTest}
+              removeSpeedTest={removeSpeedTest}
+              handleRouterImageChange={handleRouterImageChange}
+              handleRouterImagePaste={handleRouterImagePaste}
+              openRouterImageCrop={openRouterImageCrop}
+              removeRouterImage={removeRouterImage}
+            />
           </div>
         ))}
       </div>

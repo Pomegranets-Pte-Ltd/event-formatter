@@ -25,7 +25,7 @@ export default function GeneratedResults({
             <h2 id="generated-results-heading">Router results</h2>
             <span>
               {output.routerResults.length}{' '}
-              {output.routerResults.length === 1 ? 'router' : 'routers'}
+              {output.routerResults.length === 1 ? 'result' : 'results'}
             </span>
           </div>
           <p className="output-help">

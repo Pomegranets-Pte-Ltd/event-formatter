@@ -351,13 +351,36 @@
   box-shadow: none;
 }
 
-.ap-row {
+.router-equipment {
   margin-top: 16px;
   padding-top: 14px;
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
   border-top: 1px solid #ecece9;
+}
+
+.router-equipment h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.access-point-list {
+  display: grid;
+  gap: 12px;
+}
+
+.access-point-list:not(:empty) {
+  margin-top: 14px;
+}
+
+.access-point-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.access-point-row .remove-button {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .checkbox {
@@ -374,10 +397,6 @@
   width: 16px;
   height: 16px;
   accent-color: #66752c;
-}
-
-.ap-id {
-  width: 220px;
 }
 
 .section-title-row,
@@ -689,11 +708,6 @@ button {
   border-top: 1px solid #e6e8e1;
 }
 
-.router-settings-content .ap-row {
-  margin-top: 14px;
-  padding-top: 12px;
-}
-
 .router-location-field {
   grid-column: 1 / -1;
 }
@@ -724,10 +738,12 @@ button {
   font-weight: 600;
 }
 
-.speed-test-heading > small {
+.speed-test-help {
+  margin: 8px 0;
   color: #70766c;
   font-size: 11px;
   font-weight: 400;
+  line-height: 1.5;
 }
 
 .image-upload {
@@ -1500,15 +1516,6 @@ button {
   .router-settings > summary::after {
     grid-column: 2;
     grid-row: 1 / 3;
-  }
-
-  .ap-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .ap-id {
-    width: 100%;
   }
 
   .speed-test-heading {

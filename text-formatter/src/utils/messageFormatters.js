@@ -23,21 +23,47 @@ function formatCollectionTime(value) {
 }
 
 export function buildRouterCaption(router) {
-  const routerLine = `${router.model} - ${router.routerId.trim()}${router.includeAccessPoint ? ' + AP' : ''}`
+  const equipment = []
+  if (router.includeSwitch) equipment.push(`${router.switchPorts}-port switch`)
+  if (router.accessPoints.length) {
+    equipment.push(router.accessPoints.length === 1 ? 'AP' : `${router.accessPoints.length} APs`)
+  }
+  const routerLine = [`${router.model} - ${router.routerId.trim()}`, ...equipment].join(' + ')
   const mode = router.model === 'SOHO'
     ? ''
     : router.mode === 'Round Robin' ? 'RR' : router.mode
   const lines = [routerLine, [router.provider, mode].filter(Boolean).join(' ')]
 
-  if (router.includeAccessPoint) {
-    lines.push(`AP Cloud ID: ${router.accessPointId.trim()}`)
+  if (router.includeSwitch && router.switchId.trim()) {
+    lines.push(`Switch ID: ${router.switchId.trim()}`)
   }
+
+  router.accessPoints.forEach((accessPoint, index) => {
+    const label = router.accessPoints.length === 1 ? 'AP' : `AP ${index + 1}`
+    lines.push(`${label} Cloud ID: ${accessPoint.cloudId.trim()}`)
+  })
 
   if (router.location.trim()) {
     lines.push(`Location: ${router.location.trim()}`)
   }
 
   return lines.join('\n')
+}
+
+export function buildRouterResults(routers) {
+  return routers.flatMap((router, routerIndex) =>
+    router.speedTests.map((test, testIndex) => {
+      const testLabel = test.label.trim() || (
+        router.speedTests.length > 1 ? `Speed test ${testIndex + 1}` : ''
+      )
+      return {
+        id: `${router.id}-${test.id}`,
+        label: `Router ${routerIndex + 1}${testLabel ? ` - ${testLabel}` : ''}`,
+        caption: `${buildRouterCaption(router)}${testLabel ? `\nSpeed test: ${testLabel}` : ''}`,
+        speedTestImage: test.image,
+      }
+    }),
+  )
 }
 
 export function buildEventMessage(form, routers, networks) {
