@@ -1,3 +1,101 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+  border-bottom: 1px solid #dce4de;
+  box-shadow: 0 2px 10px #263c3406;
+  font: 15px/1.5 'Segoe UI', Arial, sans-serif;
+}
+
+.portal-nav {
+  max-width: 1080px;
+  min-height: 76px;
+  margin: auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.portal-brand {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 2px;
+  color: #234f3e;
+  text-decoration: none;
+  border-radius: 3px;
+}
+
+.portal-logo {
+  display: block;
+  width: 152px;
+  height: auto;
+}
+
+.portal-brand > span {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .3px;
+  color: #64756b;
+}
+
+.site-header :focus-visible {
+  outline-color: #61a187;
+}
+
+.nav-controls {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.nav-controls .draft-status {
+  max-width: 360px;
+  margin: 0;
+}
+
+.nav-reset {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: #f2f5f3;
+  color: #234f3e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nav-reset:hover:not(:disabled) {
+  background: #e6eee9;
+}
+
+.nav-reset:disabled {
+  opacity: .55;
+}
+
+html { scroll-padding-top: 130px; }
+
+@media (max-width: 650px) {
+  html { scroll-padding-top: 180px; }
+  .portal-nav { padding: 10px 16px; gap: 10px 12px; }
+  .portal-brand { flex-shrink: 1; }
+  .portal-logo { width: 130px; }
+  .nav-controls {
+    width: 100%;
+    margin: 0;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid #edf1ed;
+  }
+}
+
 .page {
   width: min(700px, calc(100% - 32px));
   margin: 0 auto;
@@ -40,35 +138,26 @@
   border: 0;
 }
 
-.page-footer {
-  margin-top: 24px;
-  color: #70766c;
-  font-size: 12px;
-  line-height: 1.5;
-  text-align: center;
+.version-footer {
+  max-width: 1100px;
+  margin: 0 auto 140px;
+  padding: 16px 20px;
+  border-top: 1px solid #dce4de;
+  font: 12px/1.5 'Segoe UI', Arial, sans-serif;
+  color: #64756b;
 }
 
-.page-footer a {
-  color: #4d5725;
-  font-weight: 600;
-  text-underline-offset: 2px;
+.version-footer p {
+  margin: 8px 0 16px;
 }
 
-.page-footer a:hover {
-  color: #303817;
-}
-
-.version-history {
-  margin-bottom: 12px;
+.version-footer a {
+  color: #1855a0;
 }
 
 .version-history > summary {
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 6px;
-  color: #4d5725;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .version-history > summary:hover {
@@ -77,17 +166,13 @@
 }
 
 .version-history > summary:focus-visible {
-  outline: 2px solid #879553;
+  outline: 3px solid #61a187;
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 .version-history-content {
   margin-top: 10px;
-  padding: 16px;
-  background: #fff;
-  border: 1px solid #dcded8;
-  border-radius: 10px;
   text-align: left;
 }
 
@@ -1034,6 +1119,7 @@ button {
 
 .form-actions {
   padding: 16px 20px;
+  justify-content: flex-end;
 }
 
 .primary-button,

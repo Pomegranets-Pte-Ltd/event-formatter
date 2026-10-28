@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import ImageCropDialog from '../components/ImageCropDialog'
+import Navbar from '../components/Navbar'
 import RouterSection from '../components/RouterSection'
 import EventDetails from '../components/EventDetails'
 import GeneratedResults from '../components/GeneratedResults'
-import VersionHistory from '../components/VersionHistory'
 import {
   getClipboardImageFile,
   getPastedImageName,
@@ -653,19 +653,17 @@ function EventFormatter() {
   const cropEditorTest = cropEditorRouter?.speedTests[cropEditorTestIndex]
 
   return (
-    <main className="page">
-      <header className="page-header">
-        <h1>Event Formatter</h1>
-        <p>Built for Pomegranets internal usage.</p>
-      </header>
-
+    <>
+      <Navbar onReset={resetForm} resetDisabled={!draftReady}>
       <p className={`draft-status${draftError ? ' draft-status-error' : ''}`} role="status">
         {!draftReady ? 'Checking for a saved draft…'
           : draftError || (!draftIsSaved ? 'Saving draft…'
             : draftRestored ? 'Draft restored. Saved on this device for 24 hours.'
               : 'Draft autosave is on. Saved on this device for 24 hours.')}
       </p>
+      </Navbar>
 
+    <main id="main-content" className="page">
       <form
         className="form"
         ref={formRef}
@@ -747,9 +745,6 @@ function EventFormatter() {
           />
 
           <div className="form-actions">
-            <button className="clear-button" type="button" onClick={resetForm}>
-              Reset
-            </button>
             <button className="primary-button" type="submit">
               Generate update
             </button>
@@ -766,14 +761,6 @@ function EventFormatter() {
         copyStatus={copyStatus}
         copyOutput={copyOutput}
       />
-
-      <footer className="page-footer">
-        <VersionHistory />
-        For support, contact{' '}
-        <a href="mailto:xavier.wong@pomegranets.com">
-          xavier.wong@pomegranets.com
-        </a>
-      </footer>
 
       {cropEditorTest?.image && (
         <ImageCropDialog
@@ -793,6 +780,7 @@ function EventFormatter() {
         {imagePasteAnnouncement.message}
       </span>
     </main>
+    </>
   )
 }
 

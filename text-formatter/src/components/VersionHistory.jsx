@@ -3,12 +3,12 @@ import buildInfo from 'virtual:build-info'
 export default function VersionHistory() {
   return (
     <details className="version-history">
-      <summary>
-        {buildInfo.version ? `Version ${buildInfo.version}` : 'Version unavailable'}
-        {buildInfo.hasLocalChanges && ' (local changes)'}
-        <span> · What’s changed</span>
-      </summary>
+      <summary>Version history</summary>
       <div className="version-history-content">
+        <p>
+          {buildInfo.version ? `Version ${buildInfo.version}` : 'Version unavailable'}
+          {buildInfo.hasLocalChanges && ' (local changes)'}
+        </p>
         <h2>What’s changed</h2>
         {buildInfo.hasLocalChanges && (
           <p>This build includes local changes that have not been committed yet.</p>
