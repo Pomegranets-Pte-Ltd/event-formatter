@@ -36,6 +36,6 @@ function faviconVersionPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/text-formatter/',
+  base: '/event-formatter/',
   plugins: [react(), buildInfoPlugin(), faviconVersionPlugin()],
 })
